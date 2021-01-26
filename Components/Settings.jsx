@@ -3,7 +3,7 @@ const { React } = require('powercord/webpack');
 
 const { KeybindRecorder, SwitchItem } = require('powercord/components/settings');
 
-module.exports = class Settings extends React.Component {
+module.exports = class Settings extends React.PureComponent  {
     render() {
         const { getSetting, updateSetting, toggleSetting } = this.props;
         return (

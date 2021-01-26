@@ -17,9 +17,9 @@ module.exports = class PowercordBlurPlugin extends Plugin {
         document.body.addEventListener("click", _this.click);
 
         /* Register Settings */
-        powercord.api.settings.registerSettings(_this.entityID, {
-            category: _this.entityID,
-            label: _this.manifest.name,
+        powercord.api.settings.registerSettings(this.entityID, {
+            category: this.entityID,
+            label: this.manifest.name,
             render: Settings
         });
     }
@@ -41,7 +41,7 @@ module.exports = class PowercordBlurPlugin extends Plugin {
     }
 
     pluginWillUnload() {
-        powercord.api.settings.unregisterSettings(_this.entityID);
+        powercord.api.settings.unregisterSettings(this.entityID);
         if (!isBlurred) {
             for (const id in _this.styles) {
                 _this.styles[id].compiler.on('src-update', _this.styles[id].compile);

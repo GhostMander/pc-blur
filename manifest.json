@@ -1,7 +1,7 @@
 {
-    "name": "Example Plugin",
+    "name": "Blur",
     "version": "1.0.0",
-    "description": "A simple plugin template.",
-    "author": "TrueXPixels",
+    "description": "Plugin that blurs everything on press of a customisable Keybind (Default: F6)",
+    "author": "GhostMander",
     "license": "MIT"
 }

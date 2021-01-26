@@ -1,4 +1,3 @@
-/* Essential Packages */
 const { Plugin } = require('powercord/entities');
 const { inject, uninject } = require('powercord/injector');
 const { getModule } = require('powercord/webpack');
@@ -8,71 +7,63 @@ const { ContextMenu } = require('powercord/components');
 
 /* Settings */
 const Settings = require('./Components/Settings.jsx');
-
-module.exports = class MyPlugin extends Plugin {
-    /* Entry Point */
+let isBlurred = false;
+let _this
+let key2
+module.exports = class PowercordBlurPlugin extends Plugin {
     async startPlugin() {
-        /* CSS/SCSS - Used for styling */
-        this.loadStylesheet('style.scss');
+        _this = this
+        document.body.removeEventListener("keyup", _this.keyup);
+        document.body.addEventListener("keyup", _this.keyup);
+
+        document.body.removeEventListener("click", _this.click);
+        document.body.addEventListener("click", _this.click);
 
         /* Register Settings */
-        powercord.api.settings.registerSettings(this.entityID, {
-            category: this.entityID,
-            label: this.manifest.name, // Label that appears in the settings menu
-            render: Settings // The React component to render. In this case, the imported Settings file
-        });
-
-        /**
-         * The following is an example of adding an option to an image's context menu,
-         * which changes the image to a picture of a dog/cat based on the setting.
-         */
-
-        // Discord is made up of thousands of modules, the following lines look for the modules which meet the specified filters.
-        this.imageWrapper = await getModule(['imageWrapper']);
-        const injectInto = await getModule(
-            m => m.default && m.default.displayName === 'MessageContextMenu'
-        );
-
-        /**
-         * The following injects a function into the specified module.
-         * Parameter 1: The InjectionID, used to uninject (should be unique).
-         * 2: The module you want to inject into.
-         * 3: The function name you want to target.
-         * 4: The function you want to inject.
-         */
-        inject('my-plugin-image-menu', injectInto, 'default', (event, res) => {
-            const target = event[0].target;
-
-            /** Only add to the Menu when the target is an image
-             * and the parent element(module) contains an imageWrapper */
-            if (target.tagName.toLowerCase() === 'img') {
-                let displayCat = this.settings.get('displayCat');
-
-                // Push new ContextMenu item to res.props.children
-                res.props.children.push(
-                    ...ContextMenu.renderRawItems([
-                        {
-                            type: 'button',
-                            name: `Display ${displayCat ? 'Cat' : 'Dog'}`,
-                            id: `toPetButton` /* When adding items, make sure all of the id's are different */,
-                            onClick: () => {
-                                /* This is the function that is executed when the button is clicked */
-                                target.src = displayCat
-                                    ? 'https://i.imgur.com/cqAklTF_d.webp'
-                                    : 'https://i.imgur.com/rpQdRoY_d.webp?maxwidth=728&fidelity=grand';
-                            }
-                        }
-                    ])
-                );
-            }
-
-            return res;
+        powercord.api.settings.registerSettings(_this.entityID, {
+            category: _this.entityID,
+            label: _this.manifest.name,
+            render: Settings
         });
     }
-
     pluginWillUnload() {
-        // When the plugin is unloaded, we need to unregister/uninject anything we've registered/injected.
-        powercord.api.settings.unregisterSettings(this.entityID);
-        uninject('my-plugin-image-menu');
+        powercord.api.settings.unregisterSettings(_this.entityID);
+        if (!isBlurred) {
+            for (const id in _this.styles) {
+                _this.styles[id].compiler.on('src-update', _this.styles[id].compile);
+                _this.styles[id].compiler.disableWatcher();
+                document.getElementById(`style-${_this.entityID}-${id}`).remove();
+            }
+        }
+        document.body.removeEventListener("keyup", _this.keyup);
+        document.body.removeEventListener("click", _this.click);
+    }
+
+    async keyup(event) {
+        if (_this.settings.get("useDefaultKeybind")) { key2 = 'F6' } else { key2 = _this.settings.get("blurBind") }
+        if (event.key == _this.settings.get("blurBind") || event.key == key2) {
+            if (!isBlurred) {
+                _this.loadStylesheet('style.scss')
+                isBlurred = true
+            } else {
+                for (const id in _this.styles) {
+                    _this.styles[id].compiler.on('src-update', _this.styles[id].compile);
+                    _this.styles[id].compiler.disableWatcher();
+                    document.getElementById(`style-${_this.entityID}-${id}`).remove();
+                }
+                isBlurred = false
+            }
+        }
+    }
+
+    async click(event) {
+        if (_this.settings.get('useMouseClick') && isBlurred) {
+            for (const id in _this.styles) {
+                _this.styles[id].compiler.on('src-update', _this.styles[id].compile);
+                _this.styles[id].compiler.disableWatcher();
+                document.getElementById(`style-${_this.entityID}-${id}`).remove();
+            }
+            isBlurred = false
+        }
     }
 };

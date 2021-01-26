@@ -1,27 +1,43 @@
 /* Essential Packages */
 const { React } = require('powercord/webpack');
 
-/* Plugin Specific Packages */
-// There are many more componenets available in "powercord/components/settings".
-const { SwitchItem } = require('powercord/components/settings');
+const { KeybindRecorder, SwitchItem } = require('powercord/components/settings');
 
-module.exports = class Settings extends React.PureComponent {
-    /**
-     * Renderer, this is what's being executed on line 22 of index.js
-     * The example here displays a toggle between displaying a cat or a dog.
-     * */
-
+module.exports = class Settings extends React.Component {
     render() {
+        const { getSetting, updateSetting, toggleSetting } = this.props;
         return (
             <div>
-                <SwitchItem
-                    value={this.props.getSetting('displayCat', true)} // The second parameter is the default setting
-                    onChange={() => {
-                        this.props.toggleSetting('displayCat', true); // The second parameter is the default setting
+                <KeybindRecorder
+                    value={getSetting('blurBind')} // The second parameter is the default setting
+                    onChange={(e) => {
+                        this.setState({ value: e })
+                        updateSetting("blurBind", e)
                     }}
-                    note='If disabled, the image will change to a dog instead.'
+                    onReset={() => {
+                        this.setState({ value: "F6" })
+                        updateSetting("blurBind", "F6")
+                    }}
                 >
-                    Display Cat
+                    Blur Screen Keybind
+                </KeybindRecorder>
+                {getSetting('blurBind') != 'F6' && <SwitchItem
+                    value={getSetting('useDefaultKeybind', false)}
+                    onChange={() => {
+                        toggleSetting('useDefaultKeybind', false);
+                    }}
+                    note='If Enabled, the default keybind (F6) can still be used in case something breaks.'
+                >
+                    Also use default keybind
+                </SwitchItem>}
+                <SwitchItem
+                    value={getSetting('useMouseClick', false)}
+                    onChange={() => {
+                        toggleSetting('useMouseClick', false);
+                    }}
+                    note='If Enabled, screen can be unblurred using mouse click.'
+                >
+                    Mouse click unblur
                 </SwitchItem>
             </div>
         );

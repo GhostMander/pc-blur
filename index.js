@@ -1,12 +1,9 @@
 const { Plugin } = require('powercord/entities');
-const { inject, uninject } = require('powercord/injector');
-const { getModule } = require('powercord/webpack');
-
-/* Plugin Specific Packages */
-const { ContextMenu } = require('powercord/components');
 
 /* Settings */
 const Settings = require('./Components/Settings.jsx');
+
+// Variables
 let isBlurred = false;
 let _this
 let key2
@@ -26,6 +23,23 @@ module.exports = class PowercordBlurPlugin extends Plugin {
             render: Settings
         });
     }
+
+    unloadStyleSheet() {
+        for (const id in this.styles) {
+            const stylesheet = this.styles[id];
+            const filename = stylesheet.compiler.file;
+
+            if (filename.endsWith('style.scss')) {
+                stylesheet.compiler.on('src-update', stylesheet.compile);
+                stylesheet.compiler.disableWatcher();
+
+                document.getElementById(`style-${this.entityID}-${id}`).remove();
+
+                delete this.styles[id];
+            }
+        }
+    }
+
     pluginWillUnload() {
         powercord.api.settings.unregisterSettings(_this.entityID);
         if (!isBlurred) {
@@ -46,11 +60,7 @@ module.exports = class PowercordBlurPlugin extends Plugin {
                 _this.loadStylesheet('style.scss')
                 isBlurred = true
             } else {
-                for (const id in _this.styles) {
-                    _this.styles[id].compiler.on('src-update', _this.styles[id].compile);
-                    _this.styles[id].compiler.disableWatcher();
-                    document.getElementById(`style-${_this.entityID}-${id}`).remove();
-                }
+                _this.unloadStyleSheet()
                 isBlurred = false
             }
         }
@@ -58,11 +68,7 @@ module.exports = class PowercordBlurPlugin extends Plugin {
 
     async click(event) {
         if (_this.settings.get('useMouseClick') && isBlurred) {
-            for (const id in _this.styles) {
-                _this.styles[id].compiler.on('src-update', _this.styles[id].compile);
-                _this.styles[id].compiler.disableWatcher();
-                document.getElementById(`style-${_this.entityID}-${id}`).remove();
-            }
+            _this.unloadStyleSheet()
             isBlurred = false
         }
     }
